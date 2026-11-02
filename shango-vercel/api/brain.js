@@ -6,7 +6,7 @@
 // Settings in Vercel (Project → Settings → Environment Variables):
 //   GROQ_API_KEY      your key from console.groq.com
 //   ALLOWED_ORIGINS  optional: extra sites allowed to call this brain (your own site is always allowed)
-//   MODEL            (Text, optional) defaults to llama-3.3-70b-versatile; any Groq model that supports tool use works
+//   MODEL            (Text, optional) defaults to openai/gpt-oss-120b (Groq retired Llama 3.3 70B from free accounts in Aug 2026)
 
 const PERSONA =
   "You are SHANGO, an AI assistant named after Ṣàngó, the Yoruba orisha of thunder and lightning and legendary fourth Alaafin of the Oyo Empire. " +
@@ -113,10 +113,10 @@ export default async function handler(request) {
         method: "POST",
         headers: { Authorization: `Bearer ${env.GROQ_API_KEY}`, "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: env.MODEL || "llama-3.3-70b-versatile",
+          model: env.MODEL || "openai/gpt-oss-120b",
           messages: [{ role: "system", content: RESEARCH_SYSTEM },
             { role: "user", content: `Topic: ${topic}\n\n${sources ? "SOURCES:\n" + sources : "No live sources; use well-established knowledge only."}` }],
-          response_format: { type: "json_object" }, max_tokens: 1400, temperature: 0.4,
+          response_format: { type: "json_object" }, max_tokens: 3000, reasoning_effort: "low", temperature: 0.4,
         }),
       });
       if (!r.ok) return json({ error: `Groq returned ${r.status}.` }, r.status === 429 ? 429 : 502, cors);
@@ -132,11 +132,12 @@ export default async function handler(request) {
       method: "POST",
       headers: { Authorization: `Bearer ${env.GROQ_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: env.MODEL || "llama-3.3-70b-versatile",
+        model: env.MODEL || "openai/gpt-oss-120b",
         messages: [{ role: "system", content: PERSONA }, ...messages],
         tools: TOOLS,
         tool_choice: "auto",
-        max_tokens: 220,
+        max_tokens: 1024,
+        reasoning_effort: "low",
         temperature: 0.7,
       }),
     });
